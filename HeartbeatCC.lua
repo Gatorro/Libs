@@ -9,7 +9,7 @@ function Heartbeat:New(f: func,token: string)
             v._CC:Disconnect()
             table.remove(self.CCs,i)
             warn('[Fail-Save]: Disconnecting all connections (Token Overlay)')
-            return
+            --return
         end
     end
     local i=0;
