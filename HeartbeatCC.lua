@@ -61,3 +61,4 @@ function Heartbeat:DisconnectAll()
     end
     return c
 end
+return Heartbeat
