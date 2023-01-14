@@ -28,7 +28,7 @@ Heartbeat:Disconnect(token: any)
 -- ▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬ --
 --[[
 \\\ << INFORMATION >> /// --
-   If the parameter token is not setted it will be setted to a INDEX depending on the already existing loops. (1 if there aren't loops.)
+   If the parameter token is not set it will be set to a INDEX depending on the already existing loops. (1 if there aren't loops.)
    The callback, in this case "i": Will return a number that increases by 1 every time the loop repeats.
 \\\ << INFORMATION >> /// --
 ]]
