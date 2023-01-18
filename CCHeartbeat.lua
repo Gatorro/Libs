@@ -7,9 +7,11 @@ function CCHeartbeat:Connect(f)
 	end)
 	return setmetatable({
 		CC = CC,
+		status = true
 	},CCHeartbeat)
 end
 function CCHeartbeat:Disconnect()
 	self.CC:Disconnect()
+	self.status = false
 end
-return CCHeartbeat
+return true
