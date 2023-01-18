@@ -8,6 +8,7 @@ function Loop:New(f: func,token: string)
             if v._token ~= token then continue end;
             coroutine.close(v._thread)
             table.remove(self.Loops,i)
+			v._CC:Fire()
             warn('[Fail-Safe]: Stopping & Removing all Loops (Token Overlay) [ ?:New('..tostring(token)..') ]')
         end
     end
@@ -54,6 +55,7 @@ function Loop:Stop(token)
         for i,v in pairs(self.Loops) do
             if not v then continue end;
             coroutine.close(v._thread)
+			v._CC:Fire()
             self.Loops[i]=nil
         end
     end
@@ -85,9 +87,35 @@ function Loop:OnStop(f,token: any)
 	if not success then
         for i,v in pairs(self.Loops) do
             coroutine.close(v._thread)
+			v._CC:Fire()
             self.Loops[i]=nil
         end
 		warn('[Fail-Safe]: Stopping & Removing all Loops. (Invalid token) [ ?:OnStop('..tostring(token)..') ]')
 	end
+end
+function Loop:Toggle(f,token)
+	if not token then
+        token = #self.Loops+1
+	else
+		for i,v in pairs(self.Loops) do
+			if v._token ~= token then continue end;
+			coroutine.close(v._thread)
+			table.remove(self.Loops,i)
+			v._CC:Fire()
+			warn('[Fail-Safe]: Stopping & Removing all Loops (Token Overlay) [ ?:New('..tostring(token)..') ]')
+		end
+    end
+	local CC = Instance.new('BindableEvent')
+	local F = CC.Event:Connect(function()
+		({f})[1]()
+	end)
+    --// Tables
+	local METATABLE = {
+		_thread = coroutine.create(function()end),
+        _token = token;
+		_CC = CC,
+    }
+    table.insert(self.Loops,METATABLE)
+    return setmetatable(METATABLE,Loop)
 end
 return Loop
