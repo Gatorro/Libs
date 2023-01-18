@@ -1,52 +1,93 @@
 local Loop = {['Loops']={}}
 Loop.__index = Loop;
-function Loop:New(name,f)
-    for i,v in pairs(self.Loops) do
-        if i ~= name then continue end;
-        coroutine.close(v._thread)
-        self.Loops[i] = nil;
-    end
-    --// THREAD
-    local thread = getgenv().thread
-    local i = 0;
-    thread = coroutine.create(function()
-        while true do
-            i+=1
-            ({f})[1](i)
-            wait()
+function Loop:New(f: func,token: string)
+    if not token then
+        token = #self.Loops+1
+    else
+        for i,v in pairs(self.Loops) do
+            if v._token ~= token then continue end;
+            coroutine.close(v._thread)
+            table.remove(self.Loops,i)
+            warn('[Fail-Safe]: Stopping & Removing all Loops (Token Overlay) [ ?:New('..tostring(token)..') ]')
         end
-    end);coroutine.resume(thread);
-    local _bindable = Instance.new("BindableEvent")
-    self['Loops'] = {
-        [name] = {
-            _thread = thread,
-            OnDisconnectFire = _bindable,
-            OnDisconnect = _bindable.Event,
-        }
+    end
+    local i=0;
+	local thread = coroutine.create(function()
+		while task.wait() do 
+			i+=1;({f})[1](i)
+		end
+	end)
+	coroutine.resume(thread)
+    --// Tables
+	local CC = Instance.new('BindableEvent')
+	local METATABLE = {
+        _thread = thread,
+        _token = token;
+		_CC = CC,
     }
+    table.insert(self.Loops,METATABLE)
+    return setmetatable(METATABLE,Loop)
 end
-function Loop:OnDisconnect(target,f)
-    if not self.Loops[target] then
+function Loop:Stop(token)
+    local _token = token or self._token
+    local success = false;
+	--// Disabling / Stopping thread
+    if self._thread then
+        coroutine.close(self._thread)
+		self._CC:Fire()
+    else
         for i,v in pairs(self.Loops) do
-            if not v._thread then continue end;
-            if v.OnDisconnectFire then v.OnDisconnectFire:Fire() end
+            if v._token ~= _token then continue end;
             coroutine.close(v._thread)
+			v._CC:Fire()
+            success = true;
         end
-        return warn('[FailSave]: Disable all the loops. (Invalid Thread/Loop)')
     end
-    self.Loops[target].OnDisconnect:Connect(f)
+	--// Removing from Loops & Fail-Safe
+    for i,v in pairs(self.Loops) do
+        if v._token ~= _token then continue end;
+        self.Loops[i]=nil
+        success = true;
+    end
+    if not success then
+        warn('[Fail-Safe]: Stopping & Removing all Loops. (Invalid token) [ ?:Stop('..tostring(token)..') ]')
+        for i,v in pairs(self.Loops) do
+            if not v then continue end;
+            coroutine.close(v._thread)
+            self.Loops[i]=nil
+        end
+    end
+	---------------------------------------
 end
-function Loop:Kill(target)
-    if not self.Loops[target] then
-        for i,v in pairs(self.Loops) do
-            if not v._thread then continue end;
-            if v.OnDisconnectFire then v.OnDisconnectFire:Fire() end
-            coroutine.close(v._thread)
-        end
-        return warn('[FailSave]: Disable all the loops. (Invalid Thread/Loop)')
+function Loop:StopAll()
+    local c = 0;
+    for i,v in pairs(self.Loops) do
+        coroutine.close(v._thread)
+		v._CC:Fire()
+        self.Loops[i]=nil
+        c+=1
     end
-    --// Normal
-    self.Loops[target].OnDisconnectFire:Fire()
-    coroutine.close(self.Loops[target]._thread)
+	return c
+end
+function Loop:OnStop(f,token: any)
+	if self._CC then
+		self._CC.Event:Connect(function() ({f})[1]() end) return
+	end
+	-- If isn't OOP and there's a token
+	local success = false;
+	for i,v in pairs(self.Loops) do
+		if v._token ~= token then continue end;
+		v._CC.Event:Connect(function()
+			({f})[1]()
+		end)
+		success = true;
+	end
+	if not success then
+        for i,v in pairs(self.Loops) do
+            coroutine.close(v._thread)
+            self.Loops[i]=nil
+        end
+		warn('[Fail-Safe]: Stopping & Removing all Loops. (Invalid token) [ ?:OnStop('..tostring(token)..') ]')
+	end
 end
 return Loop
