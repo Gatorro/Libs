@@ -47,13 +47,15 @@ function ESP:Render(object)
         quad5 = NewQuad(Settings.Color),
         quad6 = NewQuad(Settings.Color)
     }
+    local Vis1 = true
+    local Vis2 = true
     local connection
     connection = RS:Connect(function()
-        local onscreen
+        local _, onscreen = Camera:WorldToViewportPoint(part.Position)
         if onscreen then
-            local size_X = part.Size.X/2
-            local size_Y = part.Size.Y/2
-            local size_Z = part.Size.Z/2
+            local size_X = part.Size.X / 2
+            local size_Y = part.Size.Y / 2
+            local size_Z = part.Size.Z / 2
             local Top1 = Camera:WorldToViewportPoint((part.CFrame * CFrame.new(-size_X, size_Y, -size_Z)).p)
             local Top2 = Camera:WorldToViewportPoint((part.CFrame * CFrame.new(-size_X, size_Y, size_Z)).p)
             local Top3 = Camera:WorldToViewportPoint((part.CFrame * CFrame.new(size_X, size_Y, size_Z)).p)
@@ -86,10 +88,16 @@ function ESP:Render(object)
             quads.quad6.PointB = Vector2.new(Top1.X, Top1.Y)
             quads.quad6.PointC = Vector2.new(Bottom1.X, Bottom1.Y)
             quads.quad6.PointD = Vector2.new(Bottom4.X, Bottom4.Y)
+            if Vis2 then
+                for u, x in pairs(quads) do
+                    x.Visible = true
+                end;Vis2,Vis1 = false,true
+            end
         else
-            print('Visible set to false')
-            for u, x in pairs(quads) do
-                x.Visible = false
+            if Vis1 then
+                for u, x in pairs(quads) do
+                    x.Visible = false
+                end;Vis1,Vis2 = false,true
             end
         end
     end)
@@ -97,7 +105,9 @@ function ESP:Render(object)
         x.Visible = true
     end
     return setmetatable({
-        render = connection,
+        stop = function()
+            connection:Disconnect()
+        end,
         removeQuads = function()
             for i,v in pairs(quads) do
                 v:Remove()
@@ -106,7 +116,7 @@ function ESP:Render(object)
     },ESP)
 end
 function ESP:Stop()
-    self.render:Disconnect()
     self.removeQuads()
+    self.stop()
 end
 return ESP
