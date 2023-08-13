@@ -876,7 +876,7 @@ function PNG:GetPixel(x, y)
 	if not alpha then
 		alpha = 255
 	end
-	return color
+	return color, alpha
 end
 function PNG.new(buffer)
 	local reader = BinaryReader.new(buffer)
